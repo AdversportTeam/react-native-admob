@@ -3,6 +3,7 @@ package com.sbugert.rnadmob;
 import android.content.Context;
 import android.location.Location;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
 
 import com.facebook.react.bridge.Arguments;
@@ -43,14 +44,19 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
     AdSize[] validAdSizes;
     String adUnitID;
     AdSize adSize;
+    ReactViewGroup viewGroup;
 
     public ReactPublisherAdView(final Context context) {
         super(context);
+        Log.v("ReactPublisherAdView", "createAdView - start");
         this.createAdView();
+        Log.v("ReactPublisherAdView", "createAdView - stop");
     }
 
     private void createAdView() {
-        if (this.adView != null) this.adView.destroy();
+        if (this.adView != null){
+            this.adView.destroy();
+        }
 
         final Context context = getContext();
         this.adView = new PublisherAdView(context);
@@ -58,6 +64,7 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
         this.adView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
+                Log.v("ReactPublisherAdView", "onAdLoaded - start");
                 int width = adView.getAdSize().getWidthInPixels(context);
                 int height = adView.getAdSize().getHeightInPixels(context);
                 int left = adView.getLeft();
@@ -66,10 +73,12 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
                 adView.layout(left, top, left + width, top + height);
                 sendOnSizeChangeEvent();
                 sendEvent(RNPublisherBannerViewManager.EVENT_AD_LOADED, null);
+                Log.v("ReactPublisherAdView", "onAdLoaded - finish");
             }
 
             @Override
             public void onAdFailedToLoad(int errorCode) {
+                Log.v("ReactPublisherAdView", "onAdFailedToLoad - start");
                 String errorMessage = "Unknown error";
                 switch (errorCode) {
                     case PublisherAdRequest.ERROR_CODE_INTERNAL_ERROR:
@@ -107,6 +116,7 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
                 sendEvent(RNPublisherBannerViewManager.EVENT_AD_LEFT_APPLICATION, null);
             }
         });
+
         this.addView(this.adView);
     }
 
@@ -137,6 +147,7 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
     }
 
     public void loadBanner() {
+        Log.v("ReactPublisherAdView", "loadBanner - start");
         ArrayList<AdSize> adSizes = new ArrayList<AdSize>();
         if (this.adSize != null) {
             adSizes.add(this.adSize);
@@ -179,6 +190,7 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
             adRequestBuilder.setLocation(location);
         }
         PublisherAdRequest adRequest = adRequestBuilder.build();
+        Log.v("ReactPublisherAdView", "loadBanner - loadAd");
         this.adView.loadAd(adRequest);
     }
 
@@ -223,18 +235,18 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
     }
 
     @Override
-    public void onHostResume() {
+    public void onHostDestroy() {
+        this.adView.destroy();
+    }
 
+    @Override
+    public void onHostResume() {
+        this.adView.resume();
     }
 
     @Override
     public void onHostPause() {
-
-    }
-
-    @Override
-    public void onHostDestroy() {
-        adView.destroy();
+        this.adView.pause();
     }
 }
 
@@ -274,6 +286,14 @@ public class RNPublisherBannerViewManager extends ViewGroupManager<ReactPublishe
     @Override
     public void addView(ReactPublisherAdView parent, View child, int index) {
         throw new RuntimeException("RNPublisherBannerView cannot have subviews");
+    }
+
+    @Override
+    public void onDropViewInstance(ReactPublisherAdView view) {
+        view.adView.setAppEventListener(null);
+        view.adView.setAdListener(null);
+        view.adView.destroy();
+        super.onDropViewInstance(view);
     }
 
     @Override

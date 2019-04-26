@@ -188,6 +188,13 @@ public class RNAdMobBannerViewManager extends ViewGroupManager<ReactAdView> {
     }
 
     @Override
+    public void onDropViewInstance(ReactAdView view) {
+        view.adView.setAdListener(null);
+        view.adView.destroy();
+        super.onDropViewInstance(view);
+    }
+
+    @Override
     public void addView(ReactAdView parent, View child, int index) {
         throw new RuntimeException("RNAdMobBannerView cannot have subviews");
     }

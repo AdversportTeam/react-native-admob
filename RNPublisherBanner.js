@@ -16,6 +16,10 @@ class PublisherBanner extends Component {
     this.handleAppEvent = this.handleAppEvent.bind(this);
     this.handleAdFailedToLoad = this.handleAdFailedToLoad.bind(this);
     this.state = {};
+
+    this.timers = [];
+    this.timers[0] = Date.now();
+    // console.log('PublisherBanner - constructor', this.timers[0]);
   }
 
   static getDerivedStateFromProps = (props: IProps, state: IState) => {
@@ -29,6 +33,9 @@ class PublisherBanner extends Component {
   };
 
   componentDidMount() {
+    this.timers[1] = Date.now();
+    // console.log('PublisherBanner - componentDidMount', this.timers[1] - this.timers[0]);
+
     this.loadBanner();
   }
 
@@ -42,6 +49,10 @@ class PublisherBanner extends Component {
 
   handleSizeChange(event) {
     const { height, width } = event.nativeEvent;
+
+    this.timers[3] = Date.now();
+    // console.log('PublisherBanner - handleSizeChange', this.timers[3] - this.timers[0]);
+
     if (height === this.state.style.height && width === this.state.style.width) {
       return;
     }
@@ -66,6 +77,8 @@ class PublisherBanner extends Component {
   }
 
   render() {
+    this.timers[2] = Date.now();
+    // console.log('PublisherBanner - render', this.timers[2] - this.timers[0]);
     return (
       <RNDFPBannerView
         {...this.props}
