@@ -1,10 +1,15 @@
 package com.sbugert.rnadmob;
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
+import android.os.Build;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -62,10 +67,8 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
         final Context context = getContext();
         this.adView = new PublisherAdView(context);
         this.adView.setAppEventListener(this);
-        // TMP : Test config for fluid format
         this.adView.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
         this.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
-
 
         this.adView.setAdListener(new AdListener() {
             @Override
@@ -74,9 +77,6 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
                 int height = adView.getAdSize().getHeightInPixels(context);
                 int left = adView.getLeft();
                 int top = adView.getTop();
-
-                //int test = adView.getAdSize();
-                // 1120 / 175
                 adView.measure(width, height);
                 adView.layout(left, top, left + width, top + height);
                 sendOnSizeChangeEvent();
@@ -134,9 +134,25 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
         AdSize adSize = this.adView.getAdSize();
         AdSize[] adSizes = this.adView.getAdSizes();
 
-        if (adSizes[1].isFluid()) {
-            width = (int) PixelUtil.toDIPFromPixel(this.getWidth());
-            height = width * 122 / 360;
+        //Display display = ((Activity) getContext()).getWindowManager().getDefaultDisplay();
+        //int deviceWidth = display.getWidth();
+        // TODO real device with
+        WindowManager windowManager = (WindowManager) reactContext.getSystemService(Context.WINDOW_SERVICE);
+        // Get display metrics to see if we can differentiate handsets and tablets.
+        // NOTE: for API level 16 the metrics will exclude window decor.
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            windowManager.getDefaultDisplay().getRealMetrics(metrics);
+        } else {
+            windowManager.getDefaultDisplay().getMetrics(metrics);
+        }
+        int deviceWidth = metrics.widthPixels;
+
+        // Patch fluid format waiting for sdk proper way.
+        // As HP1 & HP2 have two sizes (fluid and 300x250), we only apply custom fluid size logic if the adCall not return a 300x250
+        if (adSizes[1].isFluid() && adSize.getHeight() != 250) {
+            width = (int) PixelUtil.toDIPFromPixel(deviceWidth);
+            height = width * 108 / 360;
         } else if (adSize == AdSize.SMART_BANNER) {
             width = (int) PixelUtil.toDIPFromPixel(adSize.getWidthInPixels(reactContext));
             height = (int) PixelUtil.toDIPFromPixel(adSize.getHeightInPixels(reactContext));
@@ -147,33 +163,17 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
 
         int width1 = adSize.getWidth();
         int height1 = adSize.getHeight();
-
         int width2 = this.getWidth();
         int height2 = this.getHeight();
-
         int width22 = this.getMeasuredWidth();
         int height22 = this.getMeasuredHeight();
-
         int width3 = this.adView.getWidth();
         int height3 = this.adView.getHeight();
-
         int width4 = this.adView.getMeasuredWidth();
         int height4 = this.adView.getMeasuredHeight();
 
-        // 320 - 50 // 400 - 110 // 1120 - 175 // 1440 - 875 // 1120 - 71
         event.putDouble("width", width);
         event.putDouble("height", height);
-        //height = 50
-        //width1 = 320
-        //height1 = 50
-        //width2 = 720
-        //height2 = 500
-        //width22 = 720
-        //height22 = 500
-        //width3 = 640
-        //height3 = 100
-        //width4 = 640
-        //height4 = 41
         sendEvent(RNPublisherBannerViewManager.EVENT_SIZE_CHANGE, event);
     }
 
