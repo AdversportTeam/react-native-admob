@@ -132,8 +132,12 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
         ReactContext reactContext = (ReactContext) getContext();
         WritableMap event = Arguments.createMap();
         AdSize adSize = this.adView.getAdSize();
+        AdSize[] adSizes = this.adView.getAdSizes();
 
-        if (adSize == AdSize.SMART_BANNER) {
+        if (adSizes[1].isFluid()) {
+            width = (int) PixelUtil.toDIPFromPixel(this.getWidth());
+            height = width * 122 / 360;
+        } else if (adSize == AdSize.SMART_BANNER) {
             width = (int) PixelUtil.toDIPFromPixel(adSize.getWidthInPixels(reactContext));
             height = (int) PixelUtil.toDIPFromPixel(adSize.getHeightInPixels(reactContext));
         } else {
@@ -157,8 +161,19 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
         int height4 = this.adView.getMeasuredHeight();
 
         // 320 - 50 // 400 - 110 // 1120 - 175 // 1440 - 875 // 1120 - 71
-        event.putDouble("width", 400);
-        event.putDouble("height", 110);
+        event.putDouble("width", width);
+        event.putDouble("height", height);
+        //height = 50
+        //width1 = 320
+        //height1 = 50
+        //width2 = 720
+        //height2 = 500
+        //width22 = 720
+        //height22 = 500
+        //width3 = 640
+        //height3 = 100
+        //width4 = 640
+        //height4 = 41
         sendEvent(RNPublisherBannerViewManager.EVENT_SIZE_CHANGE, event);
     }
 
