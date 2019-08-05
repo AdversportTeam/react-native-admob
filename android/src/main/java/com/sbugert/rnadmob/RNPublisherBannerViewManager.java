@@ -134,9 +134,27 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
         AdSize adSize = this.adView.getAdSize();
         AdSize[] adSizes = this.adView.getAdSizes();
 
-        //Display display = ((Activity) getContext()).getWindowManager().getDefaultDisplay();
-        //int deviceWidth = display.getWidth();
-        // TODO real device with
+        // Patch fluid format waiting for sdk proper way.
+        // As HP1 & HP2 have two sizes (fluid and 300x250), we only apply custom fluid size logic if the adCall not return a 300x250
+        if (adSizes[1].isFluid() && adSize.getHeight() != 250) {
+            width = (int) PixelUtil.toDIPFromPixel(getDeviceWidth());
+            // Design should follow this ratio 360 x 108
+            height = width * 108 / 360;
+        } else if (adSize == AdSize.SMART_BANNER) {
+            width = (int) PixelUtil.toDIPFromPixel(adSize.getWidthInPixels(reactContext));
+            height = (int) PixelUtil.toDIPFromPixel(adSize.getHeightInPixels(reactContext));
+        } else {
+            width = adSize.getWidth();
+            height = adSize.getHeight();
+        }
+
+        event.putDouble("width", width);
+        event.putDouble("height", height);
+        sendEvent(RNPublisherBannerViewManager.EVENT_SIZE_CHANGE, event);
+    }
+
+    private int getDeviceWidth() {
+        ReactContext reactContext = (ReactContext) getContext();
         WindowManager windowManager = (WindowManager) reactContext.getSystemService(Context.WINDOW_SERVICE);
         // Get display metrics to see if we can differentiate handsets and tablets.
         // NOTE: for API level 16 the metrics will exclude window decor.
@@ -147,34 +165,7 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
             windowManager.getDefaultDisplay().getMetrics(metrics);
         }
         int deviceWidth = metrics.widthPixels;
-
-        // Patch fluid format waiting for sdk proper way.
-        // As HP1 & HP2 have two sizes (fluid and 300x250), we only apply custom fluid size logic if the adCall not return a 300x250
-        if (adSizes[1].isFluid() && adSize.getHeight() != 250) {
-            width = (int) PixelUtil.toDIPFromPixel(deviceWidth);
-            height = width * 108 / 360;
-        } else if (adSize == AdSize.SMART_BANNER) {
-            width = (int) PixelUtil.toDIPFromPixel(adSize.getWidthInPixels(reactContext));
-            height = (int) PixelUtil.toDIPFromPixel(adSize.getHeightInPixels(reactContext));
-        } else {
-            width = adSize.getWidth();
-            height = adSize.getHeight();
-        }
-
-        int width1 = adSize.getWidth();
-        int height1 = adSize.getHeight();
-        int width2 = this.getWidth();
-        int height2 = this.getHeight();
-        int width22 = this.getMeasuredWidth();
-        int height22 = this.getMeasuredHeight();
-        int width3 = this.adView.getWidth();
-        int height3 = this.adView.getHeight();
-        int width4 = this.adView.getMeasuredWidth();
-        int height4 = this.adView.getMeasuredHeight();
-
-        event.putDouble("width", width);
-        event.putDouble("height", height);
-        sendEvent(RNPublisherBannerViewManager.EVENT_SIZE_CHANGE, event);
+        return deviceWidth;
     }
 
     private void sendEvent(String name, @Nullable WritableMap event) {
