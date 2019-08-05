@@ -1,11 +1,18 @@
 package com.sbugert.rnadmob;
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
+import android.os.Build;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -35,7 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, LifecycleEventListener {
+class ReactPublisherAdView extends RelativeLayout implements AppEventListener, LifecycleEventListener {
 
     protected PublisherAdView adView;
 
@@ -60,8 +67,8 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
         final Context context = getContext();
         this.adView = new PublisherAdView(context);
         this.adView.setAppEventListener(this);
-        // TMP : Test config for fluid format
-        //this.adView.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
+        this.adView.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
+        this.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
 
         this.adView.setAdListener(new AdListener() {
             @Override
@@ -125,16 +132,40 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener, L
         ReactContext reactContext = (ReactContext) getContext();
         WritableMap event = Arguments.createMap();
         AdSize adSize = this.adView.getAdSize();
-        if (adSize == AdSize.SMART_BANNER) {
+        AdSize[] adSizes = this.adView.getAdSizes();
+
+        // Patch fluid format waiting for sdk proper way.
+        // As HP1 & HP2 have two sizes (fluid and 300x250), we only apply custom fluid size logic if the adCall not return a 300x250
+        if (adSizes[1].isFluid() && adSize.getHeight() != 250) {
+            width = (int) PixelUtil.toDIPFromPixel(getDeviceWidth());
+            // Design should follow this ratio 360 x 108
+            height = width * 108 / 360;
+        } else if (adSize == AdSize.SMART_BANNER) {
             width = (int) PixelUtil.toDIPFromPixel(adSize.getWidthInPixels(reactContext));
             height = (int) PixelUtil.toDIPFromPixel(adSize.getHeightInPixels(reactContext));
         } else {
             width = adSize.getWidth();
             height = adSize.getHeight();
         }
+
         event.putDouble("width", width);
         event.putDouble("height", height);
         sendEvent(RNPublisherBannerViewManager.EVENT_SIZE_CHANGE, event);
+    }
+
+    private int getDeviceWidth() {
+        ReactContext reactContext = (ReactContext) getContext();
+        WindowManager windowManager = (WindowManager) reactContext.getSystemService(Context.WINDOW_SERVICE);
+        // Get display metrics to see if we can differentiate handsets and tablets.
+        // NOTE: for API level 16 the metrics will exclude window decor.
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            windowManager.getDefaultDisplay().getRealMetrics(metrics);
+        } else {
+            windowManager.getDefaultDisplay().getMetrics(metrics);
+        }
+        int deviceWidth = metrics.widthPixels;
+        return deviceWidth;
     }
 
     private void sendEvent(String name, @Nullable WritableMap event) {
