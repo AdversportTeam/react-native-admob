@@ -136,7 +136,7 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
 
         // Patch fluid format waiting for sdk proper way.
         // As HP1 & HP2 have two sizes (fluid and 300x250), we only apply custom fluid size logic if the adCall not return a 300x250
-        if (adSizes[1].isFluid() && adSize.getHeight() != 250) {
+        if (adSizes != null && adSizes.length >= 2 && adSizes[1].isFluid() && adSize.getHeight() != 250) {
             width = (int) PixelUtil.toDIPFromPixel(getDeviceWidth());
             // Design should follow this ratio 360 x 108
             height = width * 108 / 360;
