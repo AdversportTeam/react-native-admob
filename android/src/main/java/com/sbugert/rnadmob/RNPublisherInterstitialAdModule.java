@@ -2,6 +2,7 @@ package com.sbugert.rnadmob;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.location.Location;
 import android.support.annotation.Nullable;
 
 import com.facebook.react.bridge.Arguments;
@@ -36,6 +37,7 @@ public class RNPublisherInterstitialAdModule extends ReactContextBaseJavaModule 
     public static final String EVENT_AD_LEFT_APPLICATION = "interstitialAdLeftApplication";
 
     PublisherInterstitialAd mInterstitialAd;
+    Location location;
     String[] testDevices;
     ReadableNativeMap kvs;
     String contentUrl;
@@ -133,6 +135,11 @@ public class RNPublisherInterstitialAdModule extends ReactContextBaseJavaModule 
     }
 
     @ReactMethod
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
+    @ReactMethod
     public void requestAd(final Promise promise) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -163,6 +170,9 @@ public class RNPublisherInterstitialAdModule extends ReactContextBaseJavaModule 
                         adRequestBuilder.setContentUrl(contentUrl);
                     }
 
+                    if (location != null) {
+                        adRequestBuilder.setLocation(location);
+                    }
 
                     PublisherAdRequest adRequest = adRequestBuilder.build();
                     mInterstitialAd.loadAd(adRequest);
