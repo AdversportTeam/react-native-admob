@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -31,6 +32,7 @@ import com.facebook.react.uimanager.ThemedReactContext;
 
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.facebook.react.views.view.ReactViewGroup;
+import com.google.ads.mediation.admob.AdMobAdapter;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.doubleclick.AppEventListener;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
@@ -53,6 +55,7 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
     AdSize[] validAdSizes;
     String adUnitID;
     AdSize adSize;
+    Boolean googleConsent;
 
     public ReactPublisherAdView(final Context context) {
         super(context);
@@ -218,6 +221,14 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
         if (location != null) {
             adRequestBuilder.setLocation(location);
         }
+
+        if (googleConsent != null && googleConsent == false) {
+            /* Request non-personalized ads */
+            Bundle extras = new Bundle();
+            extras.putString("npa", "1");
+            adRequestBuilder.addNetworkExtrasBundle(AdMobAdapter.class, extras);
+        }
+
         PublisherAdRequest adRequest = adRequestBuilder.build();
         this.adView.loadAd(adRequest);
     }
@@ -254,6 +265,8 @@ class ReactPublisherAdView extends RelativeLayout implements AppEventListener, L
 
     public void setKvs (ReadableNativeMap kvs) { this.kvs = kvs; }
 
+    public void setGoogleConsent (Boolean googleConsent) { this.googleConsent = googleConsent; }
+
     @Override
     public void onAppEvent(String name, String info) {
         WritableMap event = Arguments.createMap();
@@ -289,6 +302,7 @@ public class RNPublisherBannerViewManager extends ViewGroupManager<ReactPublishe
     public static final String PROP_KVS = "kvs";
     public static final String PROP_CONTENT_URL = "contentUrl";
     public static final String PROP_LOCATION = "location";
+    public static final String PROP_GOOGLE_CONSENT = "googleConsent";
 
     public static final String EVENT_SIZE_CHANGE = "onSizeChange";
     public static final String EVENT_AD_LOADED = "onAdLoaded";
@@ -384,6 +398,11 @@ public class RNPublisherBannerViewManager extends ViewGroupManager<ReactPublishe
     @ReactProp(name=PROP_CONTENT_URL)
     public void setPropContentUrl(final ReactPublisherAdView view, final String contentUrl) {
         view.setContentUrl(contentUrl);
+    }
+
+    @ReactProp(name=PROP_GOOGLE_CONSENT)
+    public void setPropGoogleConsent(final ReactPublisherAdView view, final Boolean googleConsent) {
+        view.setGoogleConsent(googleConsent);
     }
 
     private AdSize getAdSizeFromString(String adSize) {
