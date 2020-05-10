@@ -1,4 +1,5 @@
 #import <React/RCTConvert.h>
+
 @import GoogleMobileAds;
 
 @interface RCTConvert (GADAdSize)
