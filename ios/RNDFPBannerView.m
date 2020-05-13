@@ -59,6 +59,13 @@
     [request setCustomTargeting:_kvs];
     [request setContentURL:_contentUrl];
     
+    NSNumber *no = @NO;
+    if(_googleConsent == no){
+        GADExtras *extras = [[GADExtras alloc] init];
+        extras.additionalParameters = @{@"npa": @"1"};
+        [request registerAdNetworkExtras:extras];
+    }
+    
     [_bannerView loadRequest:request];
 }
 

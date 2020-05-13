@@ -21,6 +21,7 @@ static NSString *const kEventAdLeftApplication = @"interstitialAdLeftApplication
     NSArray *_testDevices;
     NSDictionary *_kvs;
     NSString *_contentUrl;
+    NSNumber *_googleConsent;
     RCTPromiseResolveBlock _requestAdResolve;
     RCTPromiseRejectBlock _requestAdReject;
     BOOL hasListeners;
@@ -71,6 +72,11 @@ RCT_EXPORT_METHOD(setContentUrl:(NSString *)contentUrl)
     _contentUrl = contentUrl;
 }
 
+RCT_EXPORT_METHOD(setGoogleConsent:(nonnull NSNumber *)googleConsent)
+{
+    _googleConsent = googleConsent;
+}
+
 RCT_EXPORT_METHOD(requestAd:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     _requestAdResolve = nil;
@@ -87,7 +93,17 @@ RCT_EXPORT_METHOD(requestAd:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromise
         [request setTestDevices:_testDevices];
         [request setContentURL:_contentUrl];
         [request setCustomTargeting:_kvs];
+        
+        NSNumber *no = @NO;
+        if(_googleConsent == no){
+            GADExtras *extras = [[GADExtras alloc] init];
+            extras.additionalParameters = @{@"npa": @"1"};
+            [request registerAdNetworkExtras:extras];
+        }
+        
         [_interstitial loadRequest:request];
+        
+        
     } else {
         reject(@"E_AD_ALREADY_LOADED", @"Ad is already loaded.", nil);
     }
