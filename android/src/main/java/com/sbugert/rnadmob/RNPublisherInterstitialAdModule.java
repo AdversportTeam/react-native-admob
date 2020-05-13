@@ -1,10 +1,10 @@
 package com.sbugert.rnadmob;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.location.Location;
 import androidx.annotation.Nullable;
-
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
@@ -18,6 +18,7 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableNativeMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.google.ads.mediation.admob.AdMobAdapter;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
@@ -40,6 +41,7 @@ public class RNPublisherInterstitialAdModule extends ReactContextBaseJavaModule 
     String[] testDevices;
     ReadableNativeMap kvs;
     String contentUrl;
+    Boolean googleConsent;
 
     private Promise mRequestAdPromise;
 
@@ -127,6 +129,11 @@ public class RNPublisherInterstitialAdModule extends ReactContextBaseJavaModule 
     }
 
     @ReactMethod
+    public void setGoogleConsent(Boolean googleConsent) {
+        this.googleConsent = googleConsent;
+    }
+
+    @ReactMethod
     public void setTestDevices(ReadableArray testDevices) {
         ReadableNativeArray nativeArray = (ReadableNativeArray)testDevices;
         ArrayList<Object> list = nativeArray.toArrayList();
@@ -171,6 +178,13 @@ public class RNPublisherInterstitialAdModule extends ReactContextBaseJavaModule 
 
                     if (location != null) {
                         adRequestBuilder.setLocation(location);
+                    }
+
+                    if (googleConsent != null && googleConsent == false) {
+                        /* Request non-personalized ads */
+                        Bundle extras = new Bundle();
+                        extras.putString("npa", "1");
+                        adRequestBuilder.addNetworkExtrasBundle(AdMobAdapter.class, extras);
                     }
 
                     PublisherAdRequest adRequest = adRequestBuilder.build();
